@@ -103,33 +103,37 @@ class App():
         # self.main()
 
     def register(self):
-        register_top = Toplevel()
-        register_top.geometry("300x300")
-        register_top.title("Register")
-        # Définition de la compostion de la fenête register 
-        #
-        name_label = Label(register_top, text="Name:")
-        name_label.pack()
-        name_entry = Entry(register_top, justify="center")
-        name_entry.pack()
-        fname_label = Label(register_top, text="Firstname:")
-        fname_label.pack()
-        fname_entry = Entry(register_top, justify="center")
-        fname_entry.pack()
-        email_label = Label(register_top, text="Email:")
-        email_label.pack()
-        email_entry = Entry(register_top, justify="center")
-        email_entry.pack()
-        pseudo_label = Label(register_top, text="Pseudo:")
-        pseudo_label.pack()
-        pseudo_entry = Entry(register_top, justify="center")
-        pseudo_entry.pack()
-        passwd_label = Label(register_top, text="Password:")
-        passwd_label.pack()
-        passwd_entry = Entry(register_top, justify="center")
-        passwd_entry.pack()
-        submit_btn = Button(register_top, text="Submit", command=lambda : self.database.addUser(name_entry.get(), fname_entry.get(), pseudo_entry.get(), email_entry.get(), passwd_entry.get(), register_top))
-        submit_btn.pack()
+        window = customtkinter.CTkToplevel()
+        window.attributes('-topmost', 'true')
+        window.title("ChatKing - Register")
+        window.iconbitmap("img/chatking.ico")
+        appwidth = 650
+        appheight = 400
+        screenwidth = window.winfo_screenwidth()
+        screenheight = window.winfo_screenheight()
+        x = (screenwidth / 2) - (appwidth / 2)
+        y = (screenheight / 2) - (appheight / 2)
+        window.geometry(f'{appwidth}x{appheight}+{int(x)}+{int(y)}')
+        frameregister = customtkinter.CTkFrame(master=window, height=280)
+        frameregister.place(relx=0.5, rely=0.5, anchor=tkinter.CENTER)
+        # Nom
+        name_entry = customtkinter.CTkEntry(master=frameregister, placeholder_text="Name")
+        name_entry.place(relx=0.5, rely=0.1, anchor=tkinter.CENTER)
+        # Prénom
+        fname_entry = customtkinter.CTkEntry(master=frameregister, placeholder_text="Firstname")
+        fname_entry.place(relx=0.5, rely=0.25, anchor=tkinter.CENTER)
+        # Email
+        email_entry = customtkinter.CTkEntry(master=frameregister, placeholder_text="Email")
+        email_entry.place(relx=0.5, rely=0.4, anchor=tkinter.CENTER)
+        # Pseudo
+        pseudo_entry = customtkinter.CTkEntry(master=frameregister, placeholder_text="Pseudonym")
+        pseudo_entry.place(relx=0.5, rely=0.55, anchor=tkinter.CENTER)
+        # Mot de passe
+        passwd_entry = customtkinter.CTkEntry(master=frameregister, placeholder_text="Password")
+        passwd_entry.place(relx=0.5, rely=0.70, anchor=tkinter.CENTER)
+        # Bouton d'inscription
+        register_btn = customtkinter.CTkButton(master=frameregister, text="Register", fg_color="#5700C8", hover_color="#5700C8", text_color="#FFE23F", font=customtkinter.CTkFont(family="Calibri", size=20, weight="bold"), command=lambda : self.database.addUser(name_entry.get(), fname_entry.get(), email_entry.get(), pseudo_entry.get(), passwd_entry.get(), window))
+        register_btn.place(relx=0.5, rely=0.85, anchor=tkinter.CENTER)
 
     def send(self):
         pass
