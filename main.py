@@ -1,9 +1,21 @@
 from tkinter import *
 import customtkinter
 import tkinter.scrolledtext
-from database import *
-# from classes.server import *
-# from classes.client import *
+from classes.database import *
+from time import strftime
+import socket
+import threading
+
+PORT = 33000
+# SERVER = "192.168.1.60"
+# SERVER = "127.0.0.1"
+SERVER = "10.10.0.166"
+ADDRESS = (SERVER, PORT)
+FORMAT = "utf-8"
+
+client = socket.socket(socket.AF_INET,
+					socket.SOCK_STREAM)
+client.connect(ADDRESS)
 
 class App():
     # création d'un objet App (interface graphique)
@@ -40,40 +52,38 @@ class App():
         self.var = IntVar()
         self.readable_checkbox = customtkinter.CTkCheckBox(master=framelogin, text="Show password", variable=self.var, onvalue=1, offvalue=0, command=self.readable)
         self.readable_checkbox.place(relx=0.5, rely=0.9, anchor=tkinter.CENTER)
+        self.passwd_entry.bind("<Return>", (lambda event: self.login()))
         self.root.mainloop()
         # fermeture du curseur utilisé depuis la bdd
         self.database.cursor.close()
     
-    # méthode pour ouvrir la fenêtre principale de l'app myDiscord
+    # méthode pour ouvrir la fenêtre principale de l'app ChatKing
     def main(self):
         self.gui = customtkinter.CTk()
-        self.gui.geometry("600x600")
+        self.gui.geometry("600x550")
         self.gui.iconbitmap("img/chatking.ico")
         self.gui.title(f"ChatKing - logged in as {self.pseudo}")
         self.gui._set_appearance_mode("dark")
 
-        # # instancier un objet server
-        # self.client = Client(self.pseudo)
+        # thread pour la reception de messages
+        rcv = threading.Thread(target=self.receive)
+        rcv.start()
 
-        # receive_thread = Thread(target=self.client.receive)
-        # receive_thread.start()
+        self.msg_frame = customtkinter.CTkFrame(self.gui)
 
-        msg_frame = Frame(self.gui)
-        my_msg = StringVar()
-        my_msg.set("Type here.")
-        # scrollbar = Scrollbar(msg_frame)
+        self.listbox = Listbox(self.msg_frame, width=50, height=10, bg="#2A2A2A", fg="#fff")
+        self.listbox.pack()
+        self.msg_frame.pack()
+        self.msg_field = tkinter.scrolledtext.ScrolledText(self.msg_frame, height=15, width=50)
+        self.msg_field.config(state="normal", bg="#2A2A2A", fg="#fff")
+        self.msg_field.pack()
 
-        msg_field = tkinter.scrolledtext.ScrolledText(msg_frame, height=25, width=50, bg="grey")
-        # scrollbar.pack(side=RIGHT, fill=Y)
-        # msg_field.pack(side=LEFT, fill=BOTH)
-        msg_field.config(state="disabled")
-        msg_field.pack()
-        msg_frame.pack()
-
-        msg_entry = Entry(self.gui, textvariable=my_msg)
-        # msg_entry.bind("<Return>", "send")
-        msg_entry.pack()
-        send_btn = Button(self.gui, text="Send", command="send")
+        self.my_msg = StringVar()
+        self.msg_entry = Entry(self.gui, textvariable=self.my_msg)
+        # appuyer sur entrer pour envoyer un message
+        self.msg_entry.bind("<Return>", (lambda event: self.send()))
+        self.msg_entry.pack()
+        send_btn = Button(self.gui, text="Send", command=self.send)
         send_btn.pack()
 
         self.logout_btn = Button(self.gui, text="Log out", command=self.logout)
@@ -136,7 +146,59 @@ class App():
         register_btn.place(relx=0.5, rely=0.85, anchor=tkinter.CENTER)
 
     def send(self):
-        pass
+        self.msg_to_send = f"{self.msg_entry.get()}\n"
+        self.listbox.insert(END, self.msg_to_send)
+        # self.msg_field.insert(INSERT, self.msg_to_send)
+        self.msg_entry.delete("0", "end")
+        self.msg_field.config(state="normal")
+        self.msg_field.config(state="disabled")
+        self.msg_field.yview("end")
+
+        # thread pour l'envoi de messages
+        snd = threading.Thread(target=self.sendMessage)
+        snd.start()
+
+        # print(self.msg_entry.get())
+    
+    # function to receive messages
+    def receive(self):
+        while True:
+            try:
+                message = client.recv(1024).decode(FORMAT)
+                # if the messages from the server is NAME send the client's name
+                if message == 'NAME':
+                    client.send(self.pseudo.encode(FORMAT))
+                else:
+                    # insert messages to text box
+                    self.listbox.config(state=NORMAL)
+                    self.listbox.insert(END,
+                                        message+"\n\n")
+                    
+                    # inserer le message dans le champs dédié
+                    self.msg_field.config(state="normal")
+                    self.msg_field.insert(INSERT, message)
+
+                    self.listbox.config(state=DISABLED)
+                    self.listbox.see(END)
+
+                    self.msg_field.config(state="disabled")
+                    self.msg_field.yview("end")
+            except:
+                # an error will be printed on the command line or console if there's an error
+                print("An error occurred!")
+                # client.close()
+                break
+# function to send messages
+    def sendMessage(self):
+        # self.msg_field.config(state="disabled")
+        # self.listbox.config(state=DISABLED)
+        sent_time = strftime("%d/%m/%Y %H:%M")
+        while True:
+            message = (f"{self.pseudo}  {sent_time}:\n{self.msg_to_send}")
+            self.listbox.insert(END, message)
+            client.send(message.encode(FORMAT))
+            # client.send(message.encode(FORMAT))
+            break
 
 if __name__ == "__main__":
     app = App()
