@@ -6,16 +6,12 @@ from time import strftime
 import socket
 import threading
 
+# variables constantes
 PORT = 33000
-# SERVER = "192.168.1.60"
-# SERVER = "127.0.0.1"
-SERVER = "10.10.0.166"
+SERVER = "127.0.0.1"
 ADDRESS = (SERVER, PORT)
 FORMAT = "utf-8"
 
-client = socket.socket(socket.AF_INET,
-					socket.SOCK_STREAM)
-client.connect(ADDRESS)
 
 class App():
     # création d'un objet App (interface graphique)
@@ -65,18 +61,20 @@ class App():
         self.gui.title(f"ChatKing - logged in as {self.pseudo}")
         self.gui._set_appearance_mode("dark")
 
+        self.client = socket.socket(socket.AF_INET,
+					socket.SOCK_STREAM)
+        self.client.connect(ADDRESS)
+
         # thread pour la reception de messages
         rcv = threading.Thread(target=self.receive)
         rcv.start()
 
-        self.msg_frame = customtkinter.CTkFrame(self.gui)
+        self.msg_frame = Frame(self.gui)
 
-        self.listbox = Listbox(self.msg_frame, width=50, height=10, bg="#2A2A2A", fg="#fff")
-        self.listbox.pack()
-        self.msg_frame.pack()
         self.msg_field = tkinter.scrolledtext.ScrolledText(self.msg_frame, height=15, width=50)
         self.msg_field.config(state="normal", bg="#2A2A2A", fg="#fff")
         self.msg_field.pack()
+        self.msg_frame.pack()
 
         self.my_msg = StringVar()
         self.msg_entry = Entry(self.gui, textvariable=self.my_msg)
@@ -92,6 +90,7 @@ class App():
         # Fermeture de la fenêtre de log avant d'ouvrir la fenêtre main
         self.root.destroy()
         self.gui.mainloop()
+        
     
     # fonction pour afficher ou masquer le mdp selon si la case dédiée est selectionnée ou pas 
     def readable(self):
@@ -104,6 +103,8 @@ class App():
     def logout(self):
         # Fermeture de la fenêtre de main avant d'ouvrir la fenêtre log
         self.gui.destroy()
+        self.client.close()
+        print(f"{self.client} closed")
         App()
 
     def login(self):
@@ -146,62 +147,51 @@ class App():
         register_btn.place(relx=0.5, rely=0.85, anchor=tkinter.CENTER)
 
     def send(self):
-        self.msg_to_send = f"{self.msg_entry.get()}\n"
-        self.listbox.insert(END, self.msg_to_send)
-        # self.msg_field.insert(INSERT, self.msg_to_send)
-        self.msg_entry.delete("0", "end")
         self.msg_field.config(state="normal")
+        self.msg_to_send = f"{self.msg_entry.get()}\n"
+
         self.msg_field.config(state="disabled")
+        self.msg_entry.delete("0", "end")
         self.msg_field.yview("end")
 
         # thread pour l'envoi de messages
         snd = threading.Thread(target=self.sendMessage)
         snd.start()
 
-        # print(self.msg_entry.get())
     
-    # function to receive messages
+    # fonction pour recevoir des msgs
     def receive(self):
         while True:
             try:
-                message = client.recv(1024).decode(FORMAT)
-                # if the messages from the server is NAME send the client's name
+                message = self.client.recv(1024).decode(FORMAT)
+                # si le msg en provenance du serveur est "NAME", lui envoyer le nom du client 
                 if message == 'NAME':
-                    client.send(self.pseudo.encode(FORMAT))
+                    self.client.send(self.pseudo.encode(FORMAT))
                 else:
-                    # insert messages to text box
-                    self.listbox.config(state=NORMAL)
-                    self.listbox.insert(END,
-                                        message+"\n\n")
                     
                     # inserer le message dans le champs dédié
                     self.msg_field.config(state="normal")
                     self.msg_field.insert(INSERT, message)
 
-                    self.listbox.config(state=DISABLED)
-                    self.listbox.see(END)
-
                     self.msg_field.config(state="disabled")
                     self.msg_field.yview("end")
             except:
-                # an error will be printed on the command line or console if there's an error
+                # si une erreur survient, fermeture du client
                 print("An error occurred!")
-                # client.close()
+                print(self.client)
+                self.client.close()
                 break
-# function to send messages
+
+
+    # fonction pour envoyer des msg
     def sendMessage(self):
-        # self.msg_field.config(state="disabled")
-        # self.listbox.config(state=DISABLED)
         sent_time = strftime("%d/%m/%Y %H:%M")
+
         while True:
             message = (f"{self.pseudo}  {sent_time}:\n{self.msg_to_send}")
-            self.listbox.insert(END, message)
-            client.send(message.encode(FORMAT))
-            # client.send(message.encode(FORMAT))
+            self.client.send(message.encode(FORMAT))
+
             break
 
 if __name__ == "__main__":
     app = App()
-    
-# revoir et finaliser les threading 
-# classes client et server 
