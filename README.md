@@ -9,3 +9,9 @@
 pip install tkinter
 pip install customtkinter
 ```
+
+## Execution
+
+## Assurez vous de lancer le fichier server.py avant d'executer main.py
+### Les 2 fichiers peuvent être exécutés depuis le même terminal en mode debug sur VS Code.
+### Autrement il vous faudra ouvrir autant de terminaux qu'il a de fichiers à exécuter.
