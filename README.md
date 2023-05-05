@@ -4,6 +4,11 @@
 <br>
 [`The PDF of the project`](https://drive.google.com/file/d/1YKeIq4VTpHVR0I6hjyE-RkYqNB0EDt8l/view)
 
+# Projet réalisé en binôme dans le cadre de notre formation à la Plateforme_ 
+## le but de ce projet étant de développer notre version en Python de l'application Discord en y implémentant les fonctionnalités suivantes:
+- Un système de connexion et d'inscription (géré à l'aide d'une base de donnée SQL)
+- Un système de chat (géré à l'aide de sockets server/client)
+
 ## Installation
 ```
 pip install tkinter
